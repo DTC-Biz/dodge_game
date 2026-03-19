@@ -66,14 +66,10 @@ class _GameScreenState extends State<GameScreen>
     final hours = totalSeconds ~/ 3600;
     final minutes = (totalSeconds % 3600) ~/ 60;
     final seconds = totalSeconds % 60;
-    final ms = ((t - totalSeconds) * 1000)
-        .floor()
-        .toString()
-        .padLeft(3, '0');
+    final ms = ((t - totalSeconds) * 1000).floor().toString().padLeft(3, '0');
     final s = seconds.toString().padLeft(2, '0');
     final m = minutes.toString().padLeft(2, '0');
     final h = hours.toString();
-
     if (hours > 0) return '$h:$m:$s.$ms';
     if (minutes > 0) return '$m:$s.$ms';
     return '$s.$ms';
@@ -98,15 +94,12 @@ class _GameScreenState extends State<GameScreen>
     final elapsed = _scoreManager.elapsedTime;
     final diff = Difficulty.forSeconds(elapsed);
 
-    // 시작 원형 장애물: 5개로 줄이고 속도 약간 올림
     if (_currentLevel == 1 && elapsed == 0) {
       const initialCount = 5;
       final startSpeed = diff.obstacleSpeed + 30;
       for (int i = 0; i < initialCount; i++) {
         _obstacles.add(Obstacle.spawn(
-          size,
-          startSpeed,
-          _currentLevel,
+          size, startSpeed, _currentLevel,
           forceIndex: i,
           totalCount: initialCount,
           randomDistance: true,
@@ -122,13 +115,9 @@ class _GameScreenState extends State<GameScreen>
           final currentDiff = Difficulty.forSeconds(currentElapsed);
           setState(() {
             if (_obstacles.length < currentDiff.maxObstacles) {
-              _obstacles.add(
-                Obstacle.spawn(
-                  size,
-                  currentDiff.obstacleSpeed,
-                  _currentLevel,
-                ),
-              );
+              _obstacles.add(Obstacle.spawn(
+                size, currentDiff.obstacleSpeed, _currentLevel,
+              ));
             }
           });
         }
@@ -139,8 +128,7 @@ class _GameScreenState extends State<GameScreen>
   void _gameLoop() {
     if (_isGameOver || !_started) return;
 
-    final now =
-        _controller.lastElapsedDuration?.inMicroseconds.toDouble() ?? 0;
+    final now = _controller.lastElapsedDuration?.inMicroseconds.toDouble() ?? 0;
     final dt = (_lastTime == 0)
         ? 0.016
         : ((now - _lastTime) / 1000000).clamp(0.0, 0.05);
@@ -151,7 +139,6 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _scoreManager.update(dt);
 
-      // 레벨업 시 스폰 타이머만 재시작 (알림 없음)
       final newLevel = _scoreManager.level;
       if (newLevel != _currentLevel) {
         _currentLevel = newLevel;
@@ -224,8 +211,7 @@ class _GameScreenState extends State<GameScreen>
   void _share() {
     final time = _scoreManager.timeString;
     final level = _scoreManager.level;
-    final text =
-        '🎮 DODGE 게임에서 $time 버텼어요! (Lv.$level)\n나보다 오래 버텨봐! #닷지게임';
+    final text = '🎮 DODGE 게임에서 $time 버텼어요! (Lv.$level)\n나보다 오래 버텨봐! #닷지게임';
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -272,7 +258,7 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
 
-          // HUD - 레벨 표시 제거, 시간 + 최고기록만
+          // HUD
           if (_started && !_isGameOver)
             Positioned(
               top: 0,

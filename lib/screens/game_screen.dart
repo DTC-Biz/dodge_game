@@ -36,10 +36,6 @@ class _GameScreenState extends State<GameScreen>
 
   Offset? _lastTouchPosition;
 
-  int _displayedLevel = 1;
-  bool _showLevelUp = false;
-  Timer? _levelUpTimer;
-
   double _bestTime = 0.0;
   bool _isNewRecord = false;
 
@@ -90,7 +86,6 @@ class _GameScreenState extends State<GameScreen>
     _isGameOver = false;
     _isNewRecord = false;
     _currentLevel = 1;
-    _displayedLevel = 1;
     _lastTime = 0;
     _started = true;
     _lastTouchPosition = null;
@@ -100,28 +95,39 @@ class _GameScreenState extends State<GameScreen>
 
   void _startSpawning(Size size) {
     _spawnTimer?.cancel();
-    final diff = Difficulty.forLevel(_currentLevel);
+    final elapsed = _scoreManager.elapsedTime;
+    final diff = Difficulty.forSeconds(elapsed);
 
-    final initialCount = _currentLevel == 1 ? 8 : 4;
-    for (int i = 0; i < initialCount; i++) {
-      _obstacles.add(Obstacle.spawn(
-        size,
-        diff.obstacleSpeed,
-        _currentLevel,
-        forceIndex: i,
-        totalCount: initialCount,
-        randomDistance: true,
-      ));
+    // 시작 원형 장애물: 5개로 줄이고 속도 약간 올림
+    if (_currentLevel == 1 && elapsed == 0) {
+      const initialCount = 5;
+      final startSpeed = diff.obstacleSpeed + 30;
+      for (int i = 0; i < initialCount; i++) {
+        _obstacles.add(Obstacle.spawn(
+          size,
+          startSpeed,
+          _currentLevel,
+          forceIndex: i,
+          totalCount: initialCount,
+          randomDistance: true,
+        ));
+      }
     }
 
     _spawnTimer = Timer.periodic(
       Duration(milliseconds: diff.spawnIntervalMs),
       (_) {
         if (!_isGameOver && mounted) {
+          final currentElapsed = _scoreManager.elapsedTime;
+          final currentDiff = Difficulty.forSeconds(currentElapsed);
           setState(() {
-            if (_obstacles.length < diff.maxObstacles) {
+            if (_obstacles.length < currentDiff.maxObstacles) {
               _obstacles.add(
-                Obstacle.spawn(size, diff.obstacleSpeed, _currentLevel),
+                Obstacle.spawn(
+                  size,
+                  currentDiff.obstacleSpeed,
+                  _currentLevel,
+                ),
               );
             }
           });
@@ -145,10 +151,11 @@ class _GameScreenState extends State<GameScreen>
     setState(() {
       _scoreManager.update(dt);
 
-      if (_scoreManager.level != _currentLevel) {
-        _currentLevel = _scoreManager.level;
+      // 레벨업 시 스폰 타이머만 재시작 (알림 없음)
+      final newLevel = _scoreManager.level;
+      if (newLevel != _currentLevel) {
+        _currentLevel = newLevel;
         _startSpawning(size);
-        _triggerLevelUp();
       }
 
       for (final obs in _obstacles) {
@@ -163,17 +170,6 @@ class _GameScreenState extends State<GameScreen>
           return;
         }
       }
-    });
-  }
-
-  void _triggerLevelUp() {
-    setState(() {
-      _displayedLevel = _currentLevel;
-      _showLevelUp = true;
-    });
-    _levelUpTimer?.cancel();
-    _levelUpTimer = Timer(const Duration(milliseconds: 1200), () {
-      if (mounted) setState(() => _showLevelUp = false);
     });
   }
 
@@ -244,7 +240,6 @@ class _GameScreenState extends State<GameScreen>
   void dispose() {
     _controller.dispose();
     _spawnTimer?.cancel();
-    _levelUpTimer?.cancel();
     super.dispose();
   }
 
@@ -277,7 +272,7 @@ class _GameScreenState extends State<GameScreen>
             ),
           ),
 
-          // HUD
+          // HUD - 레벨 표시 제거, 시간 + 최고기록만
           if (_started && !_isGameOver)
             Positioned(
               top: 0,
@@ -296,11 +291,6 @@ class _GameScreenState extends State<GameScreen>
                         fontFeatures: [FontFeature.tabularFigures()],
                       ),
                     ),
-                    Text(
-                      'Lv.${_scoreManager.level}',
-                      style: const TextStyle(
-                          color: Colors.grey, fontSize: 13),
-                    ),
                     if (_bestTime > 0)
                       Text(
                         '최고  ${_formatTime(_bestTime)}',
@@ -308,35 +298,6 @@ class _GameScreenState extends State<GameScreen>
                             color: Color(0xFF555555), fontSize: 11),
                       ),
                   ],
-                ),
-              ),
-            ),
-
-          // 레벨업 알림
-          if (_showLevelUp)
-            Positioned(
-              top: size.height * 0.35,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2)),
-                  ),
-                  child: Text(
-                    'LEVEL $_displayedLevel',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 4,
-                    ),
-                  ),
                 ),
               ),
             ),

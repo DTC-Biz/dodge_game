@@ -91,21 +91,26 @@ class _GameOverScreenState extends State<GameOverScreen>
                       style:
                           const TextStyle(color: Colors.grey, fontSize: 13)),
                   const SizedBox(height: 12),
-                  if (widget.isNewRecord)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A2A1A),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF44FF44)),
-                      ),
-                      child: const Text('🏆 새 최고기록!',
-                          style: TextStyle(
-                              color: Color(0xFF44FF44),
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold)),
-                    )
+                  // 변경
+if (widget.isNewRecord)
+  Container(
+    padding: const EdgeInsets.symmetric(
+        horizontal: 14, vertical: 6),
+    decoration: BoxDecoration(
+      color: const Color(0xFF1A2A1A),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: const Color(0xFF44FF44)),
+    ),
+    child: const Text(
+      'NEW RECORD',
+      style: TextStyle(
+        color: Color(0xFF44FF44),
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.5,
+      ),
+    ),
+  )
                   else
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,

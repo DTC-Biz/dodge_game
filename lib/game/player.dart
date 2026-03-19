@@ -8,6 +8,7 @@ class Player {
 
   Player({required this.position});
 
+  // 터치 드래그로 위치 업데이트
   void moveTo(Offset target, Size screenSize) {
     final half = size / 2;
     position = Offset(
@@ -17,21 +18,19 @@ class Player {
   }
 
   void draw(Canvas canvas) {
-    // 외곽 글로우 링
+    // 외부 검정 원
     canvas.drawCircle(
       position,
-      size / 2 + 3,
-      Paint()
-        ..color = AppTheme.playerRing.withOpacity(0.4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
+      size / 2,
+      Paint()..color = AppTheme.player,
     );
-    // 흰색 원
-    canvas.drawCircle(position, size / 2, Paint()..color = AppTheme.player);
-    // 중앙 검정 점
-    canvas.drawCircle(position, size / 5, Paint()..color = AppTheme.playerCenter);
+    // 내부 흰점
+    canvas.drawCircle(
+      position,
+      size / 5,
+      Paint()..color = AppTheme.playerCenter,
+    );
   }
 
-  // 충돌 판정을 실제보다 작게 → 아슬아슬 쾌감
-  Rect get bounds => Rect.fromCircle(center: position, radius: size / 2 - 6);
+  Rect get bounds => Rect.fromCircle(center: position, radius: size / 2);
 }

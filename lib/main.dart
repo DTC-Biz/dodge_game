@@ -5,18 +5,12 @@ import 'utils/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // 세로 모드 고정
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-  ]);
-
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const DodgeApp());
 }
 
 class DodgeApp extends StatelessWidget {
   const DodgeApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(

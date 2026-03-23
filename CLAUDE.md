@@ -60,6 +60,12 @@ top3 상금: ₩100,000
 상금 지급: 5월 28일 (목)
 ```
 
+## Android 빌드 설정
+- applicationId: `com.downtowncompany.dodgegame` (build.gradle.kts 수정 완료)
+- google-services 플러그인: settings.gradle.kts + app/build.gradle.kts 에 추가 완료
+- APK 빌드: `flutter build apk --debug`
+- APK 경로: `build/app/outputs/flutter-apk/app-debug.apk`
+
 ## ✅ 완료된 작업
 - [x] settings_screen.dart (설정화면)
 - [x] legal_screen.dart (이용약관 + 개인정보처리방침) → 날짜 2026.05.11 적용 완료
@@ -77,6 +83,9 @@ top3 상금: ₩100,000
 - [x] GoogleService-Info.plist (Firebase iOS 연동)
 - [x] android/app/google-services.json (Firebase Android 연동)
 - [x] AndroidManifest.xml (AdMob meta-data 오류 수정)
+- [x] android/app/build.gradle.kts (applicationId 수정, google-services 플러그인 추가)
+- [x] android/settings.gradle.kts (google-services 플러그인 등록)
+- [x] Android APK 디버그 빌드 확인
 - [x] 부정행위 감지 (wall-clock 검증, 최소/최대 점수 차단)
 - [x] 앱 설명문 작성 (한국어 + 영어) → 스토어 등록 시 사용
 - [x] 게임물등급분류 가이드 → IARC 자체등급분류로 처리 (별도 신청 불필요)

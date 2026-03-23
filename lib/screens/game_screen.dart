@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
@@ -26,7 +25,7 @@ class GameScreen extends StatefulWidget {
 }
 
 class _GameScreenState extends State<GameScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late Player _player;
   final List<Obstacle> _obstacles = [];
   final ScoreManager _scoreManager = ScoreManager();
@@ -52,11 +51,32 @@ class _GameScreenState extends State<GameScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadBestTime();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(days: 1),
     )..addListener(_gameLoop);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_started || _isGameOver) return;
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _controller.stop();
+      _spawnTimer?.cancel();
+    } else if (state == AppLifecycleState.resumed) {
+      _lastTime = 0;
+      _gameStartWallTime = _gameStartWallTime == null
+          ? DateTime.now()
+          : _gameStartWallTime!.add(
+              Duration(milliseconds: DateTime.now().difference(_gameStartWallTime!).inMilliseconds),
+            );
+      _controller.forward();
+      final size = MediaQuery.of(context).size;
+      _startSpawning(size);
+    }
   }
 
   Future<void> _loadBestTime() async {
@@ -273,6 +293,7 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _spawnTimer?.cancel();
     super.dispose();

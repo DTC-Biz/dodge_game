@@ -153,7 +153,7 @@ class _ContestBanner extends StatelessWidget {
         color: const Color(0xFF0D0D00),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFFFFD700).withOpacity(0.35),
+          color: const Color(0xFFFFD700).withValues(alpha: 0.35),
         ),
       ),
       child: Row(

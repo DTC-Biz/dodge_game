@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class PlayLimit {
   static const int maxFreeFirstDay = 3;
-  static const int maxFreeNormal = 3;  // 매일 3회
+  static const int maxFreeNormal = 2;  // 매일 2회
   static const String _keyCount = 'play_count';
   static const String _keyDate = 'play_date';
   static const String _keyFirstDate = 'first_date';

@@ -217,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen>
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE63946).withOpacity(0.7),
+                    color: const Color(0xFFE63946).withValues(alpha: 0.7),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -229,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen>
                   width: 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF7B9CFF).withOpacity(0.7),
+                    color: const Color(0xFF7B9CFF).withValues(alpha: 0.7),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -272,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen>
         decoration: BoxDecoration(
           color: const Color(0xFF0D0D1A),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.4)),
+          border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.4)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

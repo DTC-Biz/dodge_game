@@ -163,7 +163,7 @@ class _LegalContent extends StatelessWidget {
           Text(
             section.body,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.65),
+              color: Colors.white.withValues(alpha: 0.65),
               fontSize: 13,
               height: 1.7,
             ),

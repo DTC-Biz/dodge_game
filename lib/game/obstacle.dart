@@ -91,19 +91,19 @@ class Obstacle {
       } else if (level == 2) {
         type = roll < 0.7 ? ObstacleType.straight : ObstacleType.curve;
       } else if (level == 3) {
-        if (roll < 0.4) type = ObstacleType.straight;
-        else if (roll < 0.75) type = ObstacleType.curve;
-        else type = ObstacleType.sine;
+        if (roll < 0.4) { type = ObstacleType.straight; }
+        else if (roll < 0.75) { type = ObstacleType.curve; }
+        else { type = ObstacleType.sine; }
       } else if (level == 4) {
-        if (roll < 0.2) type = ObstacleType.straight;
-        else if (roll < 0.5) type = ObstacleType.curve;
-        else if (roll < 0.8) type = ObstacleType.sine;
-        else type = ObstacleType.spiral;
+        if (roll < 0.2) { type = ObstacleType.straight; }
+        else if (roll < 0.5) { type = ObstacleType.curve; }
+        else if (roll < 0.8) { type = ObstacleType.sine; }
+        else { type = ObstacleType.spiral; }
       } else {
-        if (roll < 0.1) type = ObstacleType.straight;
-        else if (roll < 0.35) type = ObstacleType.curve;
-        else if (roll < 0.70) type = ObstacleType.sine;
-        else type = ObstacleType.spiral;
+        if (roll < 0.1) { type = ObstacleType.straight; }
+        else if (roll < 0.35) { type = ObstacleType.curve; }
+        else if (roll < 0.70) { type = ObstacleType.sine; }
+        else { type = ObstacleType.spiral; }
       }
     }
 
@@ -214,7 +214,7 @@ class Obstacle {
         break;
       case ObstacleType.sine:
         canvas.drawCircle(position, size * 0.5, paint);
-        final lp = Paint()..color = Colors.white.withOpacity(0.3)..strokeWidth = 1.5;
+        final lp = Paint()..color = Colors.white.withValues(alpha: 0.3)..strokeWidth = 1.5;
         canvas.drawLine(Offset(position.dx - 5, position.dy), Offset(position.dx + 5, position.dy), lp);
         canvas.drawLine(Offset(position.dx, position.dy - 5), Offset(position.dx, position.dy + 5), lp);
         break;

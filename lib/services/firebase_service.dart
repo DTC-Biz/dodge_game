@@ -127,9 +127,11 @@ class FirebaseService {
   // 헬퍼
   // ─────────────────────────────────────────
   static String _weekKey(DateTime date) {
-    final startOfYear = DateTime(date.year, 1, 1);
-    final weekNum = ((date.difference(startOfYear).inDays) / 7).ceil();
-    return '${date.year}-W${weekNum.toString().padLeft(2, '0')}';
+    // ISO 8601: 목요일이 속한 연도 기준, 월요일 시작
+    final thursday = date.add(Duration(days: 4 - (date.weekday)));
+    final startOfYear = DateTime(thursday.year, 1, 1);
+    final weekNum = ((thursday.difference(startOfYear).inDays) / 7).floor() + 1;
+    return '${thursday.year}-W${weekNum.toString().padLeft(2, '0')}';
   }
 }
 

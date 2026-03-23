@@ -116,7 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       margin: const EdgeInsets.only(bottom: 2),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.07)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
         ),
       ),
       child: ListTile(

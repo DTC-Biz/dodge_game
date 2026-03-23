@@ -349,7 +349,7 @@ if (AppConstants.isContestActive)
         color: const Color(0xFF0D0D00),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: const Color(0xFFFFD700).withOpacity(0.3),
+          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
         ),
       ),
       child: const Text(

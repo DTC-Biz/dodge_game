@@ -22,7 +22,7 @@ class Player {
       position,
       size / 2 + 3,
       Paint()
-        ..color = AppTheme.playerRing.withOpacity(0.4)
+        ..color = AppTheme.playerRing.withValues(alpha: 0.4)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );

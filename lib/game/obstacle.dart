@@ -99,11 +99,21 @@ class Obstacle {
         else if (roll < 0.5) { type = ObstacleType.curve; }
         else if (roll < 0.8) { type = ObstacleType.sine; }
         else { type = ObstacleType.spiral; }
-      } else {
+      } else if (level <= 7) {
         if (roll < 0.1) { type = ObstacleType.straight; }
         else if (roll < 0.35) { type = ObstacleType.curve; }
         else if (roll < 0.70) { type = ObstacleType.sine; }
         else { type = ObstacleType.spiral; }
+      } else if (level <= 10) {
+        if (roll < 0.05) { type = ObstacleType.straight; }
+        else if (roll < 0.20) { type = ObstacleType.curve; }
+        else if (roll < 0.55) { type = ObstacleType.sine; }
+        else { type = ObstacleType.spiral; }
+      } else {
+        // 레벨 11+: spiral + sine 위주, 거의 예측 불가
+        if (roll < 0.50) { type = ObstacleType.spiral; }
+        else if (roll < 0.85) { type = ObstacleType.sine; }
+        else { type = ObstacleType.curve; }
       }
     }
 

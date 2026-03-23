@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "209403496172",
+    "project_id": "dodge-game-11aa7",
+    "storage_bucket": "dodge-game-11aa7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:209403496172:android:a0c09bcec483add29547c9",
+        "android_client_info": {
+          "package_name": "com.downtowncompany.dodgegame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2KdE30ElSgVHN-5C4epc7wPsgNBkzY1Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

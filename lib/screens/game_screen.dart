@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:async';
+import 'dart:io';
+import 'dart:ui' as ui;
 import '../game/player.dart';
 import '../game/obstacle.dart';
 import '../game/collision.dart';
@@ -10,6 +15,7 @@ import '../utils/theme.dart';
 import '../utils/difficulty.dart';
 import '../utils/constants.dart';
 import '../utils/play_limit.dart';
+import '../services/ad_service.dart';
 import 'gameover_screen.dart';
 
 class GameScreen extends StatefulWidget {
@@ -38,6 +44,10 @@ class _GameScreenState extends State<GameScreen>
 
   double _bestTime = 0.0;
   bool _isNewRecord = false;
+  DateTime? _gameStartWallTime;
+  double _wallClockSeconds = 0.0;
+
+  final GlobalKey _shareCardKey = GlobalKey();
 
   @override
   void initState() {
@@ -85,6 +95,8 @@ class _GameScreenState extends State<GameScreen>
     _lastTime = 0;
     _started = true;
     _lastTouchPosition = null;
+    _gameStartWallTime = DateTime.now();
+    _wallClockSeconds = 0.0;
     _controller.forward(from: 0);
     _startSpawning(size);
   }
@@ -171,6 +183,12 @@ class _GameScreenState extends State<GameScreen>
       _bestTime = elapsed;
       _saveBestTime(elapsed);
     }
+
+    // 실제 경과 시간 기록 (부정행위 감지용)
+    if (_gameStartWallTime != null) {
+      _wallClockSeconds =
+          DateTime.now().difference(_gameStartWallTime!).inMilliseconds / 1000.0;
+    }
   }
 
   void _onPanStart(DragStartDetails details) {
@@ -208,18 +226,49 @@ class _GameScreenState extends State<GameScreen>
     _initGame(size);
   }
 
-  void _share() {
-    final time = _scoreManager.timeString;
-    final level = _scoreManager.level;
-    final text = '🎮 DODGE 게임에서 $time 버텼어요! (Lv.$level)\n나보다 오래 버텨봐! #닷지게임';
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('클립보드에 복사됐어요! 붙여넣기로 공유하세요 🎮'),
-        duration: Duration(seconds: 2),
-        backgroundColor: Color(0xFF222222),
-      ),
+  // 광고 보고 +1회 플레이
+  void _watchAdAndPlay() {
+    AdService.instance.showRewardedAd(
+      onRewarded: () async {
+        await PlayLimit.useOnePlay();
+        if (!mounted) return;
+        final size = MediaQuery.of(context).size;
+        _obstacles.clear();
+        _initGame(size);
+      },
+      onAdDismissed: () {
+        // 광고 취소 시 아무것도 안 함
+      },
     );
+  }
+
+  Future<void> _share() async {
+    try {
+      // RepaintBoundary 렌더링 대기
+      await Future.delayed(const Duration(milliseconds: 100));
+      final boundary = _shareCardKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null) return;
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return;
+
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/dodge_score.png');
+      await file.writeAsBytes(byteData.buffer.asUint8List());
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text:
+            '🎮 DODGE 게임에서 ${_scoreManager.timeString} 버텼어요! (Lv.${_scoreManager.level})\n#닷지게임 #DODGE',
+      );
+    } catch (_) {
+      // 이미지 공유 실패 시 텍스트 fallback
+      await Share.share(
+        '🎮 DODGE 게임에서 ${_scoreManager.timeString} 버텼어요! (Lv.${_scoreManager.level})\n#닷지게임 #DODGE',
+      );
+    }
   }
 
   @override
@@ -288,6 +337,19 @@ class _GameScreenState extends State<GameScreen>
               ),
             ),
 
+          // 공유 카드 (오프스크린 렌더링)
+          if (_isGameOver)
+            Offstage(
+              child: RepaintBoundary(
+                key: _shareCardKey,
+                child: _ShareCard(
+                  timeString: _scoreManager.timeString,
+                  level: _scoreManager.level,
+                  isNewRecord: _isNewRecord,
+                ),
+              ),
+            ),
+
           // 게임오버
           if (_isGameOver)
             GameOverScreen(
@@ -295,14 +357,149 @@ class _GameScreenState extends State<GameScreen>
               bestTimeString: _formatTime(_bestTime),
               isNewRecord: _isNewRecord,
               level: _scoreManager.level,
+              timeSeconds: _scoreManager.elapsedTime,
+              wallClockSeconds: _wallClockSeconds,
               onRestart: _restart,
               onHome: () => Navigator.pop(context),
               onShare: _share,
+              onWatchAd: AdService.instance.isRewardedReady ? _watchAdAndPlay : null,
             ),
         ],
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────
+// 공유 이미지 카드
+// ─────────────────────────────────────────
+class _ShareCard extends StatelessWidget {
+  final String timeString;
+  final int level;
+  final bool isNewRecord;
+
+  const _ShareCard({
+    required this.timeString,
+    required this.level,
+    required this.isNewRecord,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 320,
+      height: 480,
+      color: const Color(0xFF090909),
+      child: Stack(
+        children: [
+          // 그리드 배경
+          CustomPaint(
+            size: const Size(320, 480),
+            painter: _GridPainter(),
+          ),
+          // 컨텐츠
+          Padding(
+            padding: const EdgeInsets.all(36),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 앱명
+                const Text(
+                  'DODGE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 6,
+                  ),
+                ),
+                const Spacer(),
+                // 라벨
+                const Text(
+                  'SURVIVAL TIME',
+                  style: TextStyle(
+                    color: Colors.white24,
+                    fontSize: 11,
+                    letterSpacing: 3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // 시간
+                Text(
+                  timeString,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 52,
+                    fontWeight: FontWeight.w800,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // 레벨
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFF333333)),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Lv.$level',
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 12,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+                if (isNewRecord) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'NEW RECORD',
+                    style: TextStyle(
+                      color: Color(0xFF44FF44),
+                      fontSize: 11,
+                      letterSpacing: 3,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+                const Spacer(),
+                // 하단 태그라인
+                const Text(
+                  'AVOID EVERYTHING',
+                  style: TextStyle(
+                    color: Color(0xFF2A2A2A),
+                    fontSize: 10,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF111111)
+      ..strokeWidth = 0.5;
+    for (double x = 0; x < size.width; x += 40) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += 40) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
 class _GamePainter extends CustomPainter {

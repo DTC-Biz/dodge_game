@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
+import '../utils/constants.dart';
 import '../services/firebase_service.dart';
 
 class LeaderboardScreen extends StatefulWidget {
@@ -120,13 +121,71 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                       entries: _hallOfFame,
                       emptyMessage: '아직 기록이 없어요\n첫 번째 주인공이 되어보세요!',
                     ),
-                    _RankList(
-                      entries: _weeklyBest,
-                      emptyMessage: '이번 주 기록이 없어요\n지금 도전해보세요!',
-                      showWeekBadge: true,
+                    Column(
+                      children: [
+                        if (AppConstants.isContestActive)
+                          _ContestBanner(),
+                        Expanded(
+                          child: _RankList(
+                            entries: _weeklyBest,
+                            emptyMessage: '이번 주 기록이 없어요\n지금 도전해보세요!',
+                            showWeekBadge: true,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+// 대회 배너
+// ─────────────────────────────────────────
+class _ContestBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D0D00),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: const Color(0xFFFFD700).withOpacity(0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Text('🏆', style: TextStyle(fontSize: 18)),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '런칭 대회 진행 중',
+                  style: TextStyle(
+                    color: Color(0xFFFFD700),
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'TOP 3  ₩100,000 상금  ·  5/11 ~ 5/24',
+                  style: TextStyle(
+                    color: Colors.white38,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

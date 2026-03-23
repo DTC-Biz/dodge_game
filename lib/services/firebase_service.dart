@@ -8,12 +8,39 @@ class FirebaseService {
   static const _weekly  = 'weekly_best';    // 주간 베스트
 
   // ─────────────────────────────────────────
+  // 부정행위 감지
+  // ─────────────────────────────────────────
+  static const double _minScore = 0.5;       // 0.5초 미만 차단
+  static const double _maxScore = 7200.0;    // 2시간 초과 차단
+  static const double _wallClockTolerance = 1.3; // 실제 시간의 130% 초과 시 차단
+
+  static void _validateScore({
+    required double timeSeconds,
+    required double wallClockSeconds,
+  }) {
+    if (timeSeconds < _minScore) {
+      throw Exception('invalid_score_too_low');
+    }
+    if (timeSeconds > _maxScore) {
+      throw Exception('invalid_score_too_high');
+    }
+    // 게임 시간이 실제 경과 시간보다 30% 이상 크면 시간 조작으로 판정
+    if (wallClockSeconds > 0 &&
+        timeSeconds > wallClockSeconds * _wallClockTolerance) {
+      throw Exception('invalid_score_time_mismatch');
+    }
+  }
+
+  // ─────────────────────────────────────────
   // 점수 등록
   // ─────────────────────────────────────────
   static Future<void> submitScore({
     required String nickname,
     required double timeSeconds,
+    required double wallClockSeconds,
   }) async {
+    _validateScore(timeSeconds: timeSeconds, wallClockSeconds: wallClockSeconds);
+
     final now = DateTime.now();
 
     // 주간 키: "2025-W03" 형식

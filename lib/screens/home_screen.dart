@@ -168,6 +168,16 @@ class _HomeScreenState extends State<HomeScreen>
 
                 const Spacer(flex: 2),
 
+                // 조작 안내
+                const Text(
+                  '손가락으로 드래그해서 이동',
+                  style: TextStyle(
+                    color: Color(0xFF333333),
+                    fontSize: 11,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 8),
                 // 하단 태그라인
                 const Text(
                   'AVOID EVERYTHING',

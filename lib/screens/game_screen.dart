@@ -35,6 +35,7 @@ class _GameScreenState extends State<GameScreen>
 
   bool _isGameOver = false;
   bool _started = false;
+  bool _isPaused = false;
 
   Timer? _spawnTimer;
   int _currentLevel = 1;
@@ -61,12 +62,14 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_started || _isGameOver) return;
+    if (!_started || _isGameOver || _isPaused) return;
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       _controller.stop();
       _spawnTimer?.cancel();
+      setState(() => _isPaused = true);
     } else if (state == AppLifecycleState.resumed) {
+      setState(() => _isPaused = false);
       _lastTime = 0;
       _gameStartWallTime = _gameStartWallTime == null
           ? DateTime.now()
@@ -157,8 +160,23 @@ class _GameScreenState extends State<GameScreen>
     );
   }
 
-  void _gameLoop() {
+  void _pause() {
     if (_isGameOver || !_started) return;
+    setState(() => _isPaused = true);
+    _controller.stop();
+    _spawnTimer?.cancel();
+  }
+
+  void _resume() {
+    setState(() => _isPaused = false);
+    _lastTime = 0;
+    _controller.forward();
+    final size = MediaQuery.of(context).size;
+    _startSpawning(size);
+  }
+
+  void _gameLoop() {
+    if (_isGameOver || !_started || _isPaused) return;
 
     final now = _controller.lastElapsedDuration?.inMicroseconds.toDouble() ?? 0;
     final dt = (_lastTime == 0)
@@ -335,25 +353,69 @@ class _GameScreenState extends State<GameScreen>
               left: 0,
               right: 0,
               child: SafeArea(
-                child: Column(
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    const SizedBox(height: 12),
-                    Text(
-                      _scoreManager.timeString,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                    Column(
+                      children: [
+                        const SizedBox(height: 12),
+                        Text(
+                          _scoreManager.timeString,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        if (_bestTime > 0)
+                          Text(
+                            '최고  ${_formatTime(_bestTime)}',
+                            style: const TextStyle(
+                                color: Color(0xFF555555), fontSize: 11),
+                          ),
+                      ],
+                    ),
+                    // 일시정지 버튼
+                    Positioned(
+                      right: 12,
+                      top: 8,
+                      child: GestureDetector(
+                        onTap: _pause,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: Icon(Icons.pause, color: Color(0xFF333333), size: 22),
+                        ),
                       ),
                     ),
-                    if (_bestTime > 0)
-                      Text(
-                        '최고  ${_formatTime(_bestTime)}',
-                        style: const TextStyle(
-                            color: Color(0xFF555555), fontSize: 11),
-                      ),
                   ],
+                ),
+              ),
+            ),
+
+          // 일시정지 오버레이
+          if (_isPaused && !_isGameOver)
+            GestureDetector(
+              onTap: _resume,
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.7),
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.pause_circle_outline, color: Colors.white38, size: 64),
+                      SizedBox(height: 16),
+                      Text(
+                        '일시정지',
+                        style: TextStyle(color: Colors.white38, fontSize: 14, letterSpacing: 3),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '탭해서 계속하기',
+                        style: TextStyle(color: Colors.white24, fontSize: 12),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

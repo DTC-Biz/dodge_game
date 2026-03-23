@@ -43,6 +43,7 @@ class _GameOverScreenState extends State<GameOverScreen>
   bool _isSubmitting = false;
   bool _isSubmitted = false;
   int? _myRank;
+  int? _myWeeklyRank;
 
   static const _keyNickname = 'user_nickname';
 
@@ -103,17 +104,18 @@ class _GameOverScreenState extends State<GameOverScreen>
       );
 
       if (!mounted) return;
-      // 순위 조회
-final rank = await FirebaseService.fetchMyRank(
-  nickname: nickname,
-  isWeekly: false,
-);
-if (!mounted) return;
-setState(() {
-  _isSubmitting = false;
-  _isSubmitted = true;
-  _myRank = rank;
-});
+      // 역대 + 주간 순위 동시 조회
+      final ranks = await Future.wait([
+        FirebaseService.fetchMyRank(nickname: nickname, isWeekly: false),
+        FirebaseService.fetchMyRank(nickname: nickname, isWeekly: true),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _isSubmitted = true;
+        _myRank = ranks[0];
+        _myWeeklyRank = ranks[1];
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -318,24 +320,28 @@ setState(() {
                       ],
                     ),
                   ),
-if (_isSubmitted && _myRank != null)
+if (_isSubmitted)
   Padding(
     padding: const EdgeInsets.only(top: 10),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('내 순위  ',
-            style: TextStyle(color: Colors.white38, fontSize: 12)),
-        Text(
-          '$_myRank위',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+        if (_myRank != null) ...[
+          const Text('역대  ', style: TextStyle(color: Colors.white38, fontSize: 12)),
+          Text(
+            '$_myRank위',
+            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
           ),
-        ),
-        const Text('  (역대)',
-            style: TextStyle(color: Colors.white38, fontSize: 12)),
+        ],
+        if (_myRank != null && _myWeeklyRank != null)
+          const Text('   ·   ', style: TextStyle(color: Colors.white24, fontSize: 12)),
+        if (_myWeeklyRank != null) ...[
+          const Text('주간  ', style: TextStyle(color: Colors.white38, fontSize: 12)),
+          Text(
+            '$_myWeeklyRank위',
+            style: const TextStyle(color: Color(0xFF7B9CFF), fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+        ],
       ],
     ),
   ),

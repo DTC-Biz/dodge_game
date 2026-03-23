@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/theme.dart';
 import '../utils/constants.dart';
 import '../services/firebase_service.dart';
@@ -18,12 +19,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   List<LeaderboardEntry> _weeklyBest = [];
   bool _loading = true;
   String? _error;
+  String _myNickname = '';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _fetchData();
+    _loadNickname();
+  }
+
+  Future<void> _loadNickname() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _myNickname = prefs.getString('user_nickname') ?? '';
+    });
   }
 
   @override
@@ -120,6 +130,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                     _RankList(
                       entries: _hallOfFame,
                       emptyMessage: '아직 기록이 없어요\n첫 번째 주인공이 되어보세요!',
+                      myNickname: _myNickname,
                     ),
                     Column(
                       children: [
@@ -130,6 +141,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                             entries: _weeklyBest,
                             emptyMessage: '이번 주 기록이 없어요\n지금 도전해보세요!',
                             showWeekBadge: true,
+                            myNickname: _myNickname,
                           ),
                         ),
                       ],
@@ -197,11 +209,13 @@ class _RankList extends StatelessWidget {
   final List<LeaderboardEntry> entries;
   final String emptyMessage;
   final bool showWeekBadge;
+  final String myNickname;
 
   const _RankList({
     required this.entries,
     required this.emptyMessage,
     this.showWeekBadge = false,
+    this.myNickname = '',
   });
 
   @override
@@ -223,6 +237,7 @@ class _RankList extends StatelessWidget {
         return _RankTile(
           rank: i + 1,
           entry: entries[i],
+          isMe: myNickname.isNotEmpty && entries[i].nickname == myNickname,
         );
       },
     );
@@ -235,25 +250,34 @@ class _RankList extends StatelessWidget {
 class _RankTile extends StatelessWidget {
   final int rank;
   final LeaderboardEntry entry;
+  final bool isMe;
 
-  const _RankTile({required this.rank, required this.entry});
+  const _RankTile({required this.rank, required this.entry, this.isMe = false});
 
   @override
   Widget build(BuildContext context) {
     final isTop3 = rank <= 3;
 
+    Color bgColor;
+    Color borderColor;
+    double borderWidth;
+    if (isMe && !isTop3) {
+      bgColor = const Color(0xFF0D1520);
+      borderColor = const Color(0xFF7B9CFF);
+      borderWidth = 1.0;
+    } else {
+      bgColor = isTop3 ? _top3BgColor(rank) : const Color(0xFF0D0D0D);
+      borderColor = isTop3 ? _top3BorderColor(rank) : const Color(0xFF1A1A1A);
+      borderWidth = isTop3 ? 1.0 : 0.5;
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isTop3
-            ? _top3BgColor(rank)
-            : const Color(0xFF0D0D0D),
+        color: bgColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isTop3 ? _top3BorderColor(rank) : const Color(0xFF1A1A1A),
-          width: isTop3 ? 1.0 : 0.5,
-        ),
+        border: Border.all(color: borderColor, width: borderWidth),
       ),
       child: Row(
         children: [
@@ -264,8 +288,8 @@ class _RankTile extends StatelessWidget {
                 ? _Top3Badge(rank: rank)
                 : Text(
                     '$rank',
-                    style: const TextStyle(
-                      color: Colors.white24,
+                    style: TextStyle(
+                      color: isMe ? const Color(0xFF7B9CFF) : Colors.white24,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
@@ -274,14 +298,26 @@ class _RankTile extends StatelessWidget {
 
           // 닉네임
           Expanded(
-            child: Text(
-              entry.nickname,
-              style: TextStyle(
-                color: isTop3 ? Colors.white : Colors.white70,
-                fontSize: isTop3 ? 15 : 14,
-                fontWeight: isTop3 ? FontWeight.bold : FontWeight.normal,
-              ),
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Text(
+                  entry.nickname,
+                  style: TextStyle(
+                    color: isMe
+                        ? const Color(0xFF7B9CFF)
+                        : isTop3
+                            ? Colors.white
+                            : Colors.white70,
+                    fontSize: isTop3 ? 15 : 14,
+                    fontWeight: (isTop3 || isMe) ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (isMe) ...[
+                  const SizedBox(width: 6),
+                  const Text('나', style: TextStyle(color: Color(0xFF7B9CFF), fontSize: 10)),
+                ],
+              ],
             ),
           ),
 
@@ -289,7 +325,11 @@ class _RankTile extends StatelessWidget {
           Text(
             entry.timeString,
             style: TextStyle(
-              color: isTop3 ? _top3TimeColor(rank) : Colors.white54,
+              color: isMe
+                  ? const Color(0xFF7B9CFF)
+                  : isTop3
+                      ? _top3TimeColor(rank)
+                      : Colors.white54,
               fontSize: isTop3 ? 16 : 14,
               fontWeight: FontWeight.bold,
               fontFeatures: const [FontFeature.tabularFigures()],
